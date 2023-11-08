@@ -3,6 +3,7 @@ package com.lotfi.database.controllers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lotfi.database.TestDataUtil;
+import com.lotfi.database.domain.dto.AuthorDto;
 import com.lotfi.database.domain.entities.AuthorEntity;
 import com.lotfi.database.services.AuthorService;
 import org.junit.jupiter.api.Test;
@@ -188,22 +189,42 @@ public class AuthorControllerIntegrationTests {
     }
 
     @Test
-    public void testThatPartialUpdateAuthorReturns200OkStatus() throws Exception {
+    public void testThatPartialUpdateAuthorReturns200_OkStatus() throws Exception {
         // 1 - Create the author
         AuthorEntity authorA = TestDataUtil.createTestAuthorA();
-        authorService.save(authorA);
+        AuthorEntity savedAuthor = authorService.save(authorA);
 
-        // 2 - Update the author
-        authorA.setName("New name");
-        authorA.setAge(0);
-        String JsonAuthorA = objectMapper.writeValueAsString(authorA); // preparing the json object
+        // 2 - Update the author -- only update the name
+        AuthorDto testAuthorDtoA = TestDataUtil.createTestAuthorDtoA();
+        testAuthorDtoA.setName("UPDATED");
+        String JsonAuthorA = objectMapper.writeValueAsString(testAuthorDtoA); // preparing the json object
 
         mockMvc.perform( // performing a mock post
-                MockMvcRequestBuilders.patch("/authors/"+ authorA.getId())
+                MockMvcRequestBuilders.patch("/authors/"+ savedAuthor.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonAuthorA)
         ).andExpect(
                 MockMvcResultMatchers.status().isOk()
+        );
+    }
+
+    @Test
+    public void testThatPartialUpdateAuthorReturnsUpdatedAuthor() throws Exception {
+        // 1 - Create the author
+        AuthorEntity authorA = TestDataUtil.createTestAuthorA();
+        AuthorEntity savedAuthor = authorService.save(authorA);
+
+        // 2 - Update the author -- only update the name
+        AuthorDto testAuthorDtoA = TestDataUtil.createTestAuthorDtoA();
+        testAuthorDtoA.setName("UPDATED");
+        String JsonAuthorA = objectMapper.writeValueAsString(testAuthorDtoA); // preparing the json object
+
+        mockMvc.perform( // performing a mock post
+                MockMvcRequestBuilders.patch("/authors/"+ savedAuthor.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonAuthorA)
+        ).andExpect(
+                MockMvcResultMatchers.jsonPath("$.name").value("UPDATED")
         );
     }
 
