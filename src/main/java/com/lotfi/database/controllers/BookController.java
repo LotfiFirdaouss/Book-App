@@ -4,6 +4,8 @@ import com.lotfi.database.domain.dto.BookDto;
 import com.lotfi.database.domain.entities.BookEntity;
 import com.lotfi.database.mappers.Mapper;
 import com.lotfi.database.services.BookService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,20 +31,22 @@ public class BookController {
         BookEntity bookEntity = bookMapper.mapFrom(bookDto);
 
         if(bookService.isExists(isbn)){ // checking if exists
-            BookEntity savedBookEntity = bookService.saveBook(isbn,bookEntity); // <----------------
+            BookEntity savedBookEntity = bookService.createUpdateBook(isbn,bookEntity); // <----------------
             BookDto savedBookDto = bookMapper.mapTo(savedBookEntity);
             return new ResponseEntity<>(savedBookDto, HttpStatus.ACCEPTED);
         }else{
-            BookEntity savedBookEntity = bookService.saveBook(isbn,bookEntity); // <----------------
+            BookEntity savedBookEntity = bookService.createUpdateBook(isbn,bookEntity); // <----------------
             BookDto savedBookDto = bookMapper.mapTo(savedBookEntity);
             return new ResponseEntity<>(savedBookDto, HttpStatus.CREATED);
         }
     }
 
     @GetMapping("/books")
-    public List<BookDto> findAll() {
-        List<BookEntity> books = bookService.findAll();
-        return books.stream().map(bookMapper::mapTo).collect(Collectors.toList());
+    public Page<BookDto> findAll(Pageable pageable) {
+        //List<BookEntity> books = bookService.findAll();
+        //return books.stream().map(bookMapper::mapTo).collect(Collectors.toList());
+        Page<BookEntity> books = bookService.findAll(pageable);
+        return books.map(bookMapper::mapTo);
     }
 
     @GetMapping("/books/{isbn}")
@@ -52,5 +56,27 @@ public class BookController {
             BookDto book = bookMapper.mapTo(bookEntity);
             return new ResponseEntity<>(book, HttpStatus.OK);
         }).orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    @PatchMapping("/books/{isbn}")
+    public ResponseEntity<BookDto> partialUpdateBook(@PathVariable("isbn") String isbn, @RequestBody BookDto bookDto) {
+        BookEntity bookEntity = bookMapper.mapFrom(bookDto);
+
+        if(!bookService.isExists(isbn)){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        BookEntity savedBook = bookService.partialUpdateBook(isbn, bookEntity);
+        BookDto savedBookDto = bookMapper.mapTo(savedBook);
+
+        return new ResponseEntity<>(savedBookDto, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/books/{isbn}")
+    public ResponseEntity deleteBook(@PathVariable("isbn") String isbn) {
+        if(!bookService.isExists(isbn)){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        bookService.delete(isbn);
+        return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 }

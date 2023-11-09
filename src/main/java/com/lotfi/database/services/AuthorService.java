@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface AuthorService {
-    public AuthorEntity save(AuthorEntity authorEntity);
+    AuthorEntity save(AuthorEntity authorEntity);
 
     List<AuthorEntity> findAll();
 
@@ -15,4 +15,6 @@ public interface AuthorService {
     boolean isExists(Long authorId);
 
     AuthorEntity partialUpdate(Long id, AuthorEntity authorEntity);
+
+    void delete(Long id);
 }

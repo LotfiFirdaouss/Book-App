@@ -1,6 +1,5 @@
 package com.lotfi.database.controllers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lotfi.database.TestDataUtil;
 import com.lotfi.database.domain.dto.AuthorDto;
@@ -224,17 +223,32 @@ public class AuthorControllerIntegrationTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonAuthorA)
         ).andExpect(
+                MockMvcResultMatchers.jsonPath("$.id").value(testAuthorDtoA.getId())
+        ).andExpect(
                 MockMvcResultMatchers.jsonPath("$.name").value("UPDATED")
+        ).andExpect(
+                MockMvcResultMatchers.jsonPath("$.age").value(testAuthorDtoA.getAge())
         );
     }
 
+    @Test
+    public void testThatDeleteAuthorReturns204NoContentStatusForExistingAuthor() throws Exception{
+        AuthorEntity authorA = TestDataUtil.createTestAuthorA();
+        AuthorEntity savedAuthor = authorService.save(authorA);
+        mockMvc.perform(
+                MockMvcRequestBuilders.delete("/authors/"+ savedAuthor.getId())
+        ).andExpect(
+                MockMvcResultMatchers.status().isNoContent()
+        );
+    }
 
-
-
-
-
-
-
-
+    @Test
+    public void testThatDeleteAuthorReturns404NoContentStatusForNotExistingAuthor() throws Exception{
+        mockMvc.perform(
+                MockMvcRequestBuilders.delete("/authors/3")
+        ).andExpect(
+                MockMvcResultMatchers.status().isNotFound()
+        );
+    }
 
 }
